@@ -1,0 +1,506 @@
+---
+title: "Puff_analysis"
+author: "nbergum"
+date: '2023-04-20'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lme4)
+library(readxl)
+library(performance)
+library(svglite)
+library(pbkrtest)
+library(lmerTest)
+library(car)
+library(rstatix)
+library(pwr)
+```
+
+Effect of morphine on GABA-puff IPSC: summary, visualization and analysis
+```{r}
+morph_puff <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\morphine_puff.csv")
+
+SumStatsMOR <- dplyr::summarise(group_by(morph_puff, treatment, ), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n)
+)
+SumStatsMOR
+
+plot_IampMOR <- ggplot() + geom_bar(data= SumStatsMOR, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=morph_puff, aes(x= treatment, y=amplitude), size=2) + geom_line(data=morph_puff, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsMOR, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + xlab("Treatment") + ylim(0,850) + scale_fill_manual(values=c("grey","red","skyblue")) + theme_bw()
+plot_IampMOR
+
+ggsave(file="plot_IampMOR.svg", plot=plot_IampMOR, width=6, height=4)
+
+morph_puff2 <- subset(morph_puff, washout == "yes")
+morph_puff2
+
+SumStatsMOR2 <- dplyr::summarise(group_by(morph_puff2, treatment, ), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n)
+)
+SumStatsMOR2
+
+plot_IampMOR2 <- ggplot() + geom_bar(data= SumStatsMOR2, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=morph_puff2, aes(x= treatment, y=amplitude), size=2) + geom_line(data=morph_puff2, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsMOR2, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + xlab("Treatment") + ylim(0,850) + scale_fill_manual(values=c("grey","red","skyblue")) + theme_bw()
+plot_IampMOR2
+
+#ggsave(file="plot_IampMOR2.svg", plot=plot_IampMOR2, width=6, height=4)
+
+lm_Ipeakmor <- lmer(amplitude ~ treatment + (1|cell), data = morph_puff)
+plot(lm_Ipeakmor, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lm_Ipeakmor)
+shapiro.test(resid(lm_Ipeakmor))
+anova(lm_Ipeakmor)
+emmeans::emmeans(lm_Ipeakmor, pairwise ~ treatment)
+
+#lm_Ipeakmor2 <- lmer(amplitude ~ treatment + (1|cell), data = morph_puff2)
+#plot(lm_Ipeakmor2, type=c("p","smooth"), col.line=1)
+#lattice::qqmath(lm_Ipeakmor2)
+#shapiro.test(resid(lm_Ipeakmor2))
+#anova(lm_Ipeakmor2)
+#emmeans::emmeans(lm_Ipeakmor2, pairwise ~ treatment)
+```
+
+Effect of DAMGO on GABA-puff IPSC: summary, visualization and analysis
+```{r}
+damgo_puff <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\damgo_puff.csv")
+
+SumStatsDAMGO <- dplyr::summarise(group_by(damgo_puff, treatment, ), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n)
+)
+SumStatsDAMGO
+
+plot_IampDAMGO <- ggplot() + geom_bar(data= SumStatsDAMGO, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=damgo_puff, aes(x= treatment, y=amplitude), size=2) + geom_line(data=damgo_puff, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsDAMGO, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + xlab("Treatment") + ylim(0,850) + scale_fill_manual(values=c("grey","red","blue")) + theme_bw()
+plot_IampDAMGO
+
+ggsave(file="plot_IampDAMGO.svg", plot=plot_IampDAMGO, width=6, height=4)
+
+damgo_puff2 <- subset(damgo_puff, washout == "YES")
+damgo_puff2
+
+SumStatsDAMGO2 <- dplyr::summarise(group_by(damgo_puff2, treatment, ), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n)
+)
+
+SumStatsDAMGO2
+
+SumStatsDAMGO2 <- ggplot() + geom_bar(data= SumStatsDAMGO2, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=damgo_puff2, aes(x= treatment, y=amplitude), size=2) + geom_line(data=damgo_puff2, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsDAMGO2, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + xlab("Treatment") + ylim(0,850) + scale_fill_manual(values=c("grey","red","blue")) + theme_bw()
+SumStatsDAMGO2
+
+#ggsave(file="SumStatsDAMGO2.svg", plot=SumStatsDAMGO2, width=6, height=4)
+
+lm_Ipeakdamgo <- lmer(amplitude ~ treatment + (1|cell), data = damgo_puff)
+plot(lm_Ipeakdamgo, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lm_Ipeakdamgo)
+shapiro.test(resid(lm_Ipeakdamgo))
+anova(lm_Ipeakdamgo)
+emmeans::emmeans(lm_Ipeakdamgo, pairwise ~ treatment)
+
+#lm_Ipeakdamgo2 <- lmer(amplitude ~ treatment + (1|cell), data = damgo_puff2)
+#plot(lm_Ipeakdamgo2, type=c("p","smooth"), col.line=1)
+#lattice::qqmath(lm_Ipeakdamgo2)
+#shapiro.test(resid(lm_Ipeakdamgo2))
+#anova(lm_Ipeakdamgo2)
+#emmeans::emmeans(lm_Ipeakdamgo2, pairwise ~ treatment)
+```
+
+```{r}
+temp3 <- morph_puff %>% filter(treatment == "control" | treatment == "washout") %>%
+  group_by(cell) %>%
+  summarise(baseline = mean(amplitude))
+temp4 <- morph_puff %>% filter(treatment == "morphine") %>%
+  group_by(cell) %>%
+  summarise(effect = amplitude)
+
+percent_mor <- merge(temp3, temp4, all = T)
+
+percent_mor$perc_inc <- (percent_mor$effect - percent_mor$baseline)/percent_mor$baseline
+percent_mor$trt <- 'morphine' 
+percent_mor
+
+percent_damgo <- damgo_puff %>% group_by(cell) %>% dplyr::summarise(base = (amplitude[treatment=="control"] + amplitude[treatment=="NLX"])/2, perc_inc = (amplitude[treatment=="DAMGO"]/ base)-1)
+
+temp5 <- damgo_puff %>% filter(treatment == "control" | treatment == "NLX") %>%
+  group_by(cell) %>%
+  summarise(baseline = mean(amplitude))
+temp6 <- damgo_puff %>% filter(treatment == "DAMGO") %>%
+  group_by(cell) %>%
+  summarise(effect = amplitude)
+
+percent_damgo <- merge(temp5, temp6, all = T)
+
+percent_damgo$perc_inc <- (percent_damgo$effect - percent_damgo$baseline)/percent_damgo$baseline
+
+percent_damgo$trt <- 'DAMGO' 
+percent_damgo
+
+percent_mu <- merge(percent_damgo, percent_mor, all = T)
+percent_mu
+
+SumStatsMOR1 <- dplyr::summarise(group_by(percent_mu, trt), n = n(), mean_perc = mean(perc_inc),sd_perc = sd(perc_inc), se_perc = sd_perc/sqrt(n),
+)
+SumStatsMOR1
+
+plot_incMOR1 <- ggplot(data= SumStatsMOR1, aes(x=trt, y=mean_perc, fill=trt)) + geom_bar(stat="identity", width = 0.5) + geom_point(data=percent_mu, aes(y=perc_inc), size=2) + geom_errorbar(data= SumStatsMOR1, aes(ymin=mean_perc-se_perc, ymax=mean_perc+se_perc), width=.25) + scale_y_continuous(labels = scales::percent)
+plot_incMOR1
+```
+
+
+Dopamine responsiveness of ipRGCs: summary and visualization
+```{r}
+da_response <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\da_responsive.csv")
+str(da_response)
+SumStatsDA <- dplyr::summarise(group_by(da_response, treatment, DA_responsive), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n),
+mean_auc = mean(AUC),
+sd_auc = sd(AUC),
+se_auc = sd_auc/sqrt(n)
+)
+SumStatsDA
+
+da_response$treatment <- as.factor(da_response$treatment)
+da_response$DA_responsive <- as.factor(da_response$DA_responsive)
+da_response$cell <- as.factor(da_response$cell)
+
+plot_Iamp <- ggplot() + geom_bar(data= SumStatsDA, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=da_response, aes(x= treatment, y=amplitude), size=2) + geom_line(data=da_response, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsDA, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + 
+  xlab("Treatment") + scale_fill_manual(values=c("grey","red","blue")) + theme_bw() + ylim(0,850) + facet_grid(.~ DA_responsive)
+plot_Iamp
+
+ggsave(file="plot_Iamp.pdf", plot=plot_Iamp, width=6, height=4)
+ggsave(file="plot_Iamp.svg", plot=plot_Iamp, width=6, height=4)
+
+plot_I_auc <- ggplot() + geom_bar(data= SumStatsDA, aes(treatment, mean_auc, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=da_response, aes(x= treatment, y=AUC), size=2) + geom_line(data=da_response, aes(x=treatment, y=AUC, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsDA, aes(x=treatment, ymin=mean_auc-se_auc, ymax=mean_auc+se_auc, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Charge Transfer (pQ)") + xlab("Treatment") + scale_fill_manual(values=c("grey","red","blue")) + theme_bw() + ylim(0,1500) + facet_grid(.~ DA_responsive)
+plot_I_auc
+
+ggsave(file="plot_Iamp.pdf", plot=plot_Iamp, width=6, height=4)
+ggsave(file="plot_Iamp.svg", plot=plot_Iamp, width=6, height=4)
+ggsave(file="plot_I_auc.svg", plot=plot_I_auc, width=6, height=4)
+
+lm_IpeakDA <- lmer(amplitude ~ treatment*DA_responsive + (1|cell), data = da_response)
+lm_IpeakDA
+#check_model(lm_IpeakDA)
+plot(lm_IpeakDA, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lm_IpeakDA)
+shapiro.test(resid(lm_IpeakDA))
+anova(lm_IpeakDA)
+emm  <- emmeans::emmeans(lm_IpeakDA, pairwise ~ treatment|DA_responsive)
+emm
+
+p <- power.anova.test(groups = 3, 
+between.var = 89.45, within.var = 24.23, 
+power=0.9,sig.level=0.05)
+p
+
+lm_IAUCDA <- lmer(AUC ~ treatment*DA_responsive + (1|cell), data = da_response)
+plot(lm_IAUCDA, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lm_IAUCDA)
+shapiro.test(resid(lm_IAUCDA))
+anova(lm_IAUCDA)
+emmeans::emmeans(lm_IAUCDA, pairwise ~ treatment|DA_responsive)
+```
+
+Calculating the percent responsiveness of a cells to dopamine: visualization and statistics
+```{r}
+da_response
+percent_da <- da_response %>% group_by(cell, DA_responsive) %>% dplyr::summarise(base = (amplitude[treatment=="control"] + amplitude[treatment=="SCH39166"])/2, perc_inc = (amplitude[treatment=="dopamine"]/ base)-1)
+percent_da$trt <- 'da' 
+percent_da
+
+SumStatsDA1 <- dplyr::summarise(group_by(percent_da, trt, DA_responsive), n = n(), mean_perc = mean(perc_inc),sd_perc = sd(perc_inc), se_perc = sd_perc/sqrt(n),
+)
+SumStatsDA1
+
+plot_da_perc <-  ggplot() + geom_bar(data= SumStatsDA1, aes(DA_responsive, mean_perc, fill= DA_responsive), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=percent_da, aes(x= DA_responsive, y=perc_inc), size=2) + geom_errorbar(data= SumStatsDA1, aes(x=DA_responsive, ymin=mean_perc-se_perc, ymax=mean_perc+se_perc, fill = DA_responsive), position=position_dodge(width=0.9), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.8)) + theme_bw() + ylab("Percent Peak Current Change")
+plot_da_perc
+
+ggsave(file="plot_da_perc.pdf", plot=plot_da_perc, width=6, height=4)
+ggsave(file="plot_da_perc.svg", plot=plot_da_perc, width=6, height=4)
+
+res.ftest <- var.test(perc_inc ~ DA_responsive, data = percent_da)
+res.ftest
+
+lm_da <- lm(perc_inc ~ DA_responsive, data = percent_da)
+
+shapiro.test(rstandard(lm_da))
+qqPlot(percent_da$perc_inc)
+
+res <- wilcox.test(perc_inc ~ DA_responsive, data = percent_da)
+res
+```
+SKF383939 responsiveness of ipRGCs: summary and visualization
+```{r}
+skf_response <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\skf_sch_response.csv")
+skf_response$treatment <- factor(skf_response$treatment, levels = c("control", "SKF38393", "SCH39166"))
+str(skf_response)
+SumStatsSKF <- dplyr::summarise(group_by(skf_response, treatment, DA_responsive), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n),
+)
+SumStatsSKF
+
+skf_response$treatment <- as.factor(skf_response$treatment)
+skf_response$DA_responsive <- as.factor(skf_response$DA_responsive)
+skf_response$cell <- as.factor(skf_response$cell)
+
+
+plot_IampSKF <- ggplot() + geom_bar(data= SumStatsSKF, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=skf_response, aes(x= treatment, y=amplitude), size=2) + geom_line(data=skf_response, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsSKF, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + scale_fill_manual(values=c("grey","red","blue")) + xlab("Treatment") + theme_bw() + ylim(0,850) + facet_grid(.~ DA_responsive)
+plot_IampSKF
+
+ggsave(file="plot_IampSKF.pdf", plot=plot_IampSKF, width=6, height=4)
+ggsave(file="plot_IampSKF.svg", plot=plot_IampSKF, width=6, height=4)
+
+lm_IpeakSKF <- lmer(amplitude ~ treatment*DA_responsive + (1|cell), data = skf_response)
+lm_IpeakSKF
+#check_model(lm_IpeakDA)
+plot(lm_IpeakSKF, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lm_IpeakSKF)
+shapiro.test(resid(lm_IpeakSKF))
+anova(lm_IpeakSKF)
+emmSKF  <- emmeans::emmeans(lm_IpeakSKF, pairwise ~ treatment|DA_responsive)
+emmSKF
+```
+
+Calculating the percent responsiveness of a cells to SKF383939: visualization and statistics
+```{r}
+temp1 <- skf_response %>% filter(treatment == "control" | treatment == "SCH39166") %>%
+  group_by(cell, DA_responsive) %>%
+  summarise(baseline = mean(amplitude))
+temp2 <- skf_response %>% filter(treatment == "SKF38393") %>%
+  group_by(cell, DA_responsive) %>%
+  summarise(effect = amplitude)
+
+percent_skf <- merge(temp1, temp2, all = T)
+
+percent_skf$perc_inc <- (percent_skf$effect - percent_skf$baseline)/percent_skf$baseline
+percent_skf$trt <- 'skf' 
+percent_skf
+  
+SumStatsSKF1 <- dplyr::summarise(group_by(percent_skf, trt, DA_responsive), 
+        n = n(), 
+        mean_perc = mean(perc_inc), 
+        sd_perc = sd(perc_inc), 
+        se_perc = sd_perc/sqrt(n), 
+        )
+SumStatsSKF1
+
+plot_skf_perc <-  ggplot() + geom_bar(data= SumStatsSKF1, aes(DA_responsive, mean_perc, fill= DA_responsive), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=percent_skf, aes(x= DA_responsive, y=perc_inc), size=2) + geom_errorbar(data= SumStatsSKF1, aes(x=DA_responsive, ymin=mean_perc-se_perc, ymax=mean_perc+se_perc, fill = DA_responsive), position=position_dodge(width=0.9), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.8)) + theme_bw() + ylab("Percent Peak Current Change")
+plot_skf_perc
+
+ggsave(file="plot_skf_perc.pdf", plot=plot_skf_perc, width=6, height=4)
+ggsave(file="plot_skf_perc.svg", plot=plot_skf_perc, width=6, height=4)
+
+res.ftest <- var.test(perc_inc ~ DA_responsive, data = percent_skf)
+res.ftest
+
+lm_skf <- lm(perc_inc ~ DA_responsive, data = percent_skf)
+
+shapiro.test(rstandard(lm_skf))
+qqPlot(percent_skf$perc_inc)
+
+t.test(perc_inc ~ DA_responsive, data = percent_skf, paired = FALSE)
+
+d_value1<- cohens_d(perc_inc ~ DA_responsive, data = percent_skf, paired = FALSE)
+d_value1
+
+pwr.t.test(d=-3.596382,power=0.9,sig.level=.05,type="two.sample",alternative="less")
+```
+
+Effect of  50 uM forskolin on GABA-puff IPSC: summary, visualization and analysis
+```{r}
+forskolin <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\fsk_puff.csv")
+str(forskolin)
+percentdelta <- forskolin %>% group_by(cell) %>% dplyr::summarise(perc_inc = ((amplitude[treatment=="FSK"])/ (amplitude[treatment=="control"]))-1)
+percentdelta$trt <- 'fsk50uM' 
+percentdelta
+
+SumStatsFSK <- dplyr::summarise(group_by(forskolin, treatment, ), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n),
+mean_auc = mean(AUC),
+sd_auc = sd(AUC),
+se_auc = sd_auc/sqrt(n)
+)
+SumStatsFSK
+
+SumStatsInc <- dplyr::summarise(group_by(percentdelta, trt,), 
+n = n(),
+mean_inc = mean(perc_inc),
+sd_inc = sd(perc_inc),
+se_inc = sd_inc/sqrt(n))
+
+SumStatsInc 
+
+forskolin$treatment <- as.factor(forskolin$treatment)
+forskolin$cell <- as.factor(forskolin$cell)
+
+plot_Iampf50 <- ggplot() + geom_bar(data= SumStatsFSK, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=forskolin, aes(x= treatment, y=amplitude), size=2) + geom_line(data=forskolin, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsFSK, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + xlab("Treatment") + scale_fill_manual(values=c("grey","red")) + theme_bw() + ylim(0,950)
+plot_Iampf50
+
+ggsave(file="plot_Iampf50.pdf", plot=plot_Iampf50, width=6, height=4)
+ggsave(file="plot_Iampf50.svg", plot=plot_Iampf50, width=6, height=4)
+
+plot_incFSK <- ggplot(data= SumStatsInc, aes(x=trt, y=mean_inc, fill=trt)) + geom_bar(stat="identity", width = 0.5) + geom_point(data=percentdelta, aes(y=perc_inc), size=2) + geom_errorbar(data= SumStatsInc, aes(ymin=mean_inc-se_inc, ymax=mean_inc+se_inc), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.4)) 
+plot_incFSK
+
+bartlett.test(amplitude ~ treatment, forskolin)
+t.test(formula = amplitude ~ treatment, data = forskolin, paired = TRUE)
+
+
+shapiro.test(percentdelta$perc_inc)
+t.test(percentdelta$perc_inc, mu =0, alternative = "greater")
+```
+
+Effect of  5 uM forskolin on GABA-puff IPSC: summary, visualization and analysis
+```{r}
+fsk5um <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\fsk5uM_response.csv")
+str(fsk5um)
+percentdelta5 <- fsk5um %>% group_by(cell) %>% dplyr::summarise(perc_inc = ((amplitude[treatment=="FSK"])/ (amplitude[treatment=="control"]))-1)
+percentdelta5$trt <- 'fsk5uM' 
+percentdelta5
+
+SumStatsFSK5 <- dplyr::summarise(group_by(fsk5um, treatment, ), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n),
+)
+SumStatsFSK5
+
+SumStatsInc5 <- dplyr::summarise(group_by(percentdelta5, trt,), 
+n = n(),
+mean_inc = mean(perc_inc),
+sd_inc = sd(perc_inc),
+se_inc = sd_inc/sqrt(n))
+SumStatsInc5
+
+fsk5um$treatment <- as.factor(fsk5um$treatment)
+fsk5um$cell <- as.factor(fsk5um$cell)
+
+plot_Iampf5 <- ggplot() + geom_bar(data= SumStatsFSK5, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=fsk5um, aes(x= treatment, y=amplitude), size=2) + geom_line(data=fsk5um, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsFSK5, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + xlab("Treatment") + scale_fill_manual(values=c("grey","red")) + theme_bw() + ylim(0,600)
+plot_Iampf5
+
+ggsave(file="plot_Iampf5.pdf", plot=plot_Iampf5, width=6, height=4)
+ggsave(file="plot_Iampf5.svg", plot=plot_Iampf5, width=6, height=4)
+
+plot_incFSK5 <- ggplot(data= SumStatsInc5, aes(x=trt, y=mean_inc, fill=trt)) + geom_bar(stat="identity", width = 0.5) + geom_point(data=percentdelta5, aes(y=perc_inc), size=2) + geom_errorbar(data= SumStatsInc5, aes(ymin=mean_inc-se_inc, ymax=mean_inc+se_inc), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.4))
+plot_incFSK5
+
+bartlett.test(amplitude ~ treatment, fsk5um)
+t.test(formula = amplitude ~ treatment, data = fsk5um, paired = TRUE)
+shapiro.test(percentdelta5$perc_inc)
+t.test(percentdelta5$perc_inc, mu =0, alternative = "greater")
+```
+
+Effect of  15.8 uM forskolin on GABA-puff IPSC: summary, visualization and analysis
+Comparing different concentrations of forskolin
+```{r}
+fsk15um <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\fsk15uM_response1.csv")
+str(fsk15um)
+fsk15um_cs <- filter(fsk15um, internal == "CsGlc")
+percentdelta15_cs <- fsk15um_cs %>% group_by(cell) %>% dplyr::summarise(perc_inc = ((amplitude[treatment=="FSK"])/ (amplitude[treatment=="control"]))-1)
+percentdelta15_cs$trt <- 'fsk15uM' 
+percentdelta15_cs
+
+fsk15um_kt <- filter(fsk15um, internal == "KT5720")
+percentdelta15_kt <- fsk15um_kt %>% group_by(cell) %>% dplyr::summarise(perc_inc = ((amplitude[treatment=="FSK"])/ (amplitude[treatment=="control"]))-1)
+percentdelta15_kt$trt <- 'fsk15uM+KT5720'
+percentdelta15_kt
+
+percentdelta15 <- merge(percentdelta15_cs, percentdelta15_kt, , all = T)
+percentdelta15
+
+SumStatsFSK15 <- dplyr::summarise(group_by(fsk15um, treatment, internal, ), 
+n = n(),
+mean_amp = mean(amplitude),
+sd_amp = sd(amplitude),
+se_amp = sd_amp/sqrt(n),
+)
+SumStatsFSK15
+
+plot_Iampf15 <- ggplot() + geom_bar(data= SumStatsFSK15, aes(treatment, mean_amp, fill= treatment), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=fsk15um, aes(x= treatment, y=amplitude), size=2) + geom_line(data=fsk15um, aes(x=treatment, y=amplitude, group=cell), linetype="dotted") + geom_errorbar(data= SumStatsFSK15, aes(x=treatment, ymin=mean_amp-se_amp, ymax=mean_amp+se_amp, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylab("Peak Current Amplitude (pA)") + xlab("Treatment") + scale_fill_manual(values=c("grey","red")) + theme_bw() + facet_grid(.~ internal) + ylim(0,650)
+plot_Iampf15
+
+ggsave(file="plot_Iampf15.pdf", plot=plot_Iampf15, width=6, height=4)
+ggsave(file="plot_Iampf15.svg", plot=plot_Iampf15, width=6, height=4)
+
+lm_Ipeak_fsk<- lmer(amplitude ~ treatment*internal + (1|cell), data = fsk15um)
+lm_Ipeak_fsk
+plot(lm_Ipeak_fsk, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lm_Ipeak_fsk)
+shapiro.test(resid(lm_Ipeak_fsk))
+anova(lm_Ipeak_fsk)
+emm_fsk1  <- emmeans::emmeans(lm_Ipeak_fsk, pairwise ~ treatment|internal)
+emm_fsk1
+emm_fsk2  <- emmeans::emmeans(lm_Ipeak_fsk, pairwise ~ internal|treatment)
+emm_fsk2
+
+SumStatsInc15 <- dplyr::summarise(group_by(percentdelta15, trt,), 
+n = n(),
+mean_inc = mean(perc_inc),
+sd_inc = sd(perc_inc),
+se_inc = sd_inc/sqrt(n))
+SumStatsInc15
+
+plot_incFSK15 <- ggplot(data= SumStatsInc15, aes(x=trt, y=mean_inc, fill=trt)) + geom_bar(stat="identity", width = 0.5) + geom_point(data=percentdelta15, aes(y=perc_inc), size=2) + geom_errorbar(data= SumStatsInc15, aes(ymin=mean_inc-se_inc, ymax=mean_inc+se_inc), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.5)) + scale_fill_manual(values=c("red2","purple")) + ylab("Percent Peak Current Change")
+plot_incFSK15
+
+ggsave(file="plot_incFSK15.svg", plot=plot_incFSK15, width=6, height=4)
+
+bartlett.test(perc_inc ~ trt, percentdelta15)
+t.test(formula = perc_inc ~ trt, data = percentdelta15, paired = FALSE)
+
+d_value<- cohens_d(perc_inc ~ trt, data = percentdelta15, paired = FALSE)
+d_value
+
+pwr.t.test(d=3.165836,n=5,sig.level=.05,type="two.sample",alternative="two.sided")
+
+```
+
+```{r}
+fsk_a <- merge(percentdelta5, percentdelta, all = T)
+fsk_all <- merge(fsk_a, percentdelta15, , all = T)
+fsk_all
+
+SumStatsPercFSK <- dplyr::summarise(group_by(fsk_all, trt,), 
+n = n(),
+mean_inc = mean(perc_inc),
+sd_inc = sd(perc_inc),
+se_inc = sd_inc/sqrt(n))
+SumStatsPercFSK
+
+SumStatsPercFSK
+
+SumStatsPercFSK$trt <- factor(SumStatsPercFSK$trt, levels=c('fsk5uM', 'fsk15uM+KT5720','fsk15uM', 'fsk50uM'))
+
+plot_incFSK_all <- ggplot(data= SumStatsPercFSK, aes(x=trt, y=mean_inc, fill=trt)) + geom_bar(stat="identity", width = 0.5) + geom_point(data=fsk_all, aes(y=perc_inc), size=2) + geom_errorbar(data= SumStatsPercFSK, aes(ymin=mean_inc-se_inc, ymax=mean_inc+se_inc), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.75)) + ylab("Percent Change in Current Amplitude") + scale_fill_manual(values=c("red", "purple", "red2","red4")) +  ylab("Percent Peak Current Change")
+plot_incFSK_all
+
+ggsave(file="plot_incFSK_all.svg", plot=plot_incFSK_all, width=6, height=4)
+
+lm_fsk <- lm(perc_inc ~ trt, data = fsk_all)
+plot(lm_fsk)
+
+shapiro.test(rstandard(lm_fsk))
+anova(lm_fsk)
+
+em_fsk <- emmeans::emmeans(lm_fsk, pairwise ~ trt)
+em_fsk
+```
