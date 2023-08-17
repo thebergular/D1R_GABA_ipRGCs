@@ -1,0 +1,213 @@
+---
+title: "DA_IPSCs"
+author: "nbergum"
+date: '2023-03-20'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(lme4)
+library(readxl)
+```
+
+```{r}
+cell1 <- read_excel("C:\\Users\\nikbe\\Documents\\Vigh Lab\\MiniAnalysis\\02212023a.xlsx")
+cell1
+amp1 <- cell1$Amplitude
+h1 <- hist(amp1, breaks = 40)
+h1
+text(h1$mids,h1$counts,labels=h1$counts)
+str(cell1)
+SumStats1 <- dplyr::summarise(group_by(cell1, treatment), 
+n = n(),
+median_i= median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats1
+```
+
+```{r}
+cell2 <- read_excel("C:\\Users\\nikbe\\Documents\\Vigh Lab\\MiniAnalysis\\02222023a.xlsx")
+cell2
+amp2 <- cell2$Amplitude
+h2 <- hist(amp2, breaks = 40)
+h2
+text(h2$mids,h2$counts,labels=h2$counts)
+SumStats2 <- dplyr::summarise(group_by(cell2, treatment), 
+n = n(),
+median_i= median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats2
+```
+
+```{r}
+cell3 <- read_excel("C:\\Users\\nikbe\\Documents\\Vigh Lab\\MiniAnalysis\\02222023b.xlsx")
+cell3
+amp3 <- cell3$Amplitude
+h3 <- hist(amp3, breaks = 40)
+h3
+text(h3$mids,h3$counts,labels=h3$counts)
+SumStats3 <- dplyr::summarise(group_by(cell3, treatment), 
+n = n(),
+median_i= median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats3
+```
+```{r}
+cell4 <- read_excel("C:\\Users\\nikbe\\Documents\\Vigh Lab\\MiniAnalysis\\02232023d.xlsx")
+amp4 <- cell4$Amplitude
+h4 <- hist(amp4, breaks = 40)
+h4
+text(h4$mids,h4$counts,labels=h4$counts)
+SumStats4 <- dplyr::summarise(group_by(cell4, treatment), 
+n = n(),
+median_i= median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats4
+```
+
+```{r}
+cell5 <- read_excel("C:\\Users\\nikbe\\Documents\\Vigh Lab\\MiniAnalysis\\02282023b.xlsx")
+amp5 <- cell5$Amplitude
+h5 <- hist(amp5, breaks = 40)
+h5
+text(h5$mids,h5$counts,labels=h5$counts)
+SumStats5 <- dplyr::summarise(group_by(cell5, treatment), 
+n = n(),
+median_i= median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats5
+```
+
+```{r}
+cell6 <- read_excel("C:\\Users\\nikbe\\Documents\\Vigh Lab\\MiniAnalysis\\03082023b.xlsx")
+amp6 <- cell6$Amplitude
+h6 <- hist(amp6, breaks = 40)
+h6
+text(h6$mids,h6$counts,labels=h6$counts)
+SumStats6 <- dplyr::summarise(group_by(cell6, treatment), 
+n = n(),
+median_i= median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats6
+```
+```{r}
+cell7 <- read_excel("C:\\Users\\nikbe\\Documents\\Vigh Lab\\MiniAnalysis\\03082023c.xlsx")
+amp7 <- cell7$Amplitude
+h7 <- hist(amp7, breaks = 40)
+h7
+text(h7$mids,h7$counts,labels=h7$counts)
+SumStats7 <- dplyr::summarise(group_by(cell7, treatment), 
+n = n(),
+median_i= median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats7
+```
+
+```{r}
+cell12 <- merge(cell1, cell2, all=T)
+cell123 <- merge(cell12, cell3, all=T)
+cell1234 <- merge(cell123, cell4, all=T)
+cell12345 <- merge(cell1234, cell5, all=T)
+cell123456 <- merge(cell12345, cell6, all=T)
+cell1234567 <- merge(cell123456, cell7, all=T)
+cell1234567
+
+ggplot(cell1234567, aes(Amplitude, color= treatment)) + stat_ecdf(geom = "point") + scale_color_manual(values=c("grey","red","blue")) + ylab("Cumulative probability") + xlim(0,45)
+
+ggplot(cell1234567, aes(`Decay (ms)`, color= treatment)) + stat_ecdf(geom = "point") + scale_color_manual(values=c("grey","red","blue")) + ylab("Cumulative probability") + xlim(0,45)
+
+ggplot(cell1234567, aes(`Decay (ms)`,fill=treatment)) + geom_histogram()
+ggplot(cell1234567, aes(`10-90Rise`,fill=treatment)) + geom_histogram()
+
+ggplot(cell1234567, aes(x=`Decay (ms)`,y=Amplitude,color=treatment)) + geom_point(aes(fill=treatment))  + stat_smooth(method = "lm",
+              formula = y ~ x,
+              geom = "smooth") + facet_grid(~treatment)
+ggplot(cell1234567, aes(x=`10-90Rise`,y=Amplitude,color=treatment)) + geom_point(aes(fill=treatment))  + stat_smooth(method = "lm",
+              formula = y ~ x,
+              geom = "smooth") + facet_grid(~treatment)
+
+
+SumStats_allcells <- dplyr::summarise(group_by(cell123456, treatment, cell, ), 
+n = n(),
+f = n/60,
+median_amp = median(Amplitude),
+mean_amp = mean(Amplitude),
+sd_Amplitude = sd(Amplitude),
+se_Amplitude = sd_Amplitude/sqrt(n))
+SumStats_allcells
+
+SumStats_allcells$treatment <- as.factor(SumStats_allcells$treatment)
+SumStats_allcells$cell <- as.factor(SumStats_allcells$cell)
+
+library(lme4)
+
+lmer_ipsc <- lmer(mean_amp ~ treatment + (1|cell), data = SumStats_allcells)
+plot(lmer_ipsc, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lmer_ipsc)
+shapiro.test(resid(lmer_ipsc))
+anova(lmer_ipsc)
+emmeans::emmeans(lmer_ipsc, pairwise ~ treatment)
+
+lmer_ipscf <- lmer(n ~ treatment + (1|cell), data = SumStats_allcells)
+plot(lmer_ipscf, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lmer_ipscf)
+shapiro.test(resid(lmer_ipscf))
+anova(lmer_ipscf)
+emmeans::emmeans(lmer_ipscf, pairwise ~ treatment)
+```
+
+```{r}
+library(cowplot)
+SumStats_allcells$n <= as.numeric(SumStats_allcells$n)
+SumStats_all <- dplyr::summarise(group_by(SumStats_allcells, treatment, ), 
+n1 = n(),
+mean_AMP = mean(mean_amp),
+sd_AMP = sd(mean_amp),
+se_AMP = sd_AMP/sqrt(n1),
+freq = mean(f), 
+sd_F = sd(f),
+se_F =sd_F/sqrt(n1))
+SumStats_all
+
+plot_IPSCa <- ggplot() + geom_bar(data= SumStats_all, aes(treatment, mean_AMP, fill= treatment), position= "dodge", stat = "identity", width = 0.5) +
+  geom_point(data=SumStats_allcells, aes(x= treatment, y=mean_amp), size=2) +
+  geom_line(data=SumStats_allcells, aes(x=treatment, y=mean_amp, group=cell), linetype="dotted") +
+  geom_errorbar(data= SumStats_all, aes(x=treatment, ymin=mean_AMP-se_AMP, ymax=mean_AMP+se_AMP, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylim(0, 18)+ scale_fill_manual(values=c("grey","red","blue")) + theme_bw() + ylab("Amplitude (pA)")
+plot_IPSCa
+
+ggsave(file="plot_IPSCa.svg", plot=plot_IPSCa, width=6, height=4)
+ggsave(file="plot_IPSCa.pdf", plot=plot_IPSCa, width=6, height=4)
+
+plot_IPSCf <- ggplot() + geom_bar(data= SumStats_all, aes(treatment, freq, fill= treatment), position= "dodge", stat = "identity", width = 0.5) +
+  geom_point(data=SumStats_allcells, aes(x= treatment, y=f), size=2) +
+  geom_line(data=SumStats_allcells, aes(x=treatment, y=f, group=cell), linetype="dotted") +
+  geom_errorbar(data= SumStats_all, aes(x=treatment, ymin=freq - se_F, ymax=freq+se_F, fill = treatment), position=position_dodge(width=0.9), width=.25) + ylim(0, 11.5)+ scale_fill_manual(values=c("grey","red","blue")) + theme_bw() + ylab("Frequency (Hz)")
+plot_IPSCf 
+
+ggsave(file="plot_IPSCf.svg", plot=plot_IPSCf, width=6, height=4)
+ggsave(file="plot_IPSCf.pdf", plot=plot_IPSCf, width=6, height=4)
+
+legend <- get_legend(
+  plot_IPSCf + theme(legend.box.margin = margin(0, 12))
+)
+plot_grid(plot_IPSCa + theme(legend.position="none"), plot_IPSCf, align = "hv", labels = c("A", "B"),rel_widths = c(2.3, 3) )
+
+plot_sIPSCs <- plot_grid(plot_IPSCa+ theme(legend.position="none"), NULL, plot_IPSCf+ theme(legend.position="none"), align = "hv", labels = c("B","", "C"),nrow=1,rel_widths = c(3,0.5,3))
+ggsave(file="plot_sIPSCs.pdf", plot=plot_sIPSCs, width=6, height=4)
+```
