@@ -504,3 +504,40 @@ anova(lm_fsk)
 em_fsk <- emmeans::emmeans(lm_fsk, pairwise ~ trt)
 em_fsk
 ```
+
+```{r}
+IV_curve <- read.csv("C:\\Users\\nikbe\\Documents\\Vigh Lab\\Puff\\IV_curve.csv")
+str(IV_curve)
+SumStatsIV <- dplyr::summarise(group_by(IV_curve, treatment, voltage,), 
+n = n(),
+mean_i = mean(current),
+sd_i = sd(current),
+se_i = sd_i/sqrt(n))
+SumStatsIV
+
+plot_IV <- ggplot(data= SumStatsIV, aes(x=voltage, y=mean_i, color=treatment)) +  geom_point(stat="identity", position=position_dodge(), size=3) + geom_line(aes(group=treatment), linetype="dashed") + geom_errorbar(data= SumStatsIV, aes(ymin=mean_i-se_i, ymax=mean_i+se_i), width=.25)  + scale_x_continuous(limits = c(-100,20)) + scale_color_manual(values=c("black", "red")) +  ylab("Current Amplitude (pA)") +  xlab("Voltage (mV)") + geom_hline(yintercept=0, alpha=.4) + geom_vline(xintercept = 0, alpha=.4)
+plot_IV
+
+ggsave(file="plot_IV.svg", plot=plot_IV, width=6, height=4)
+
+IV_curve2 <- droplevels(IV_curve[!IV_curve$cell == 'cell g',])
+IV_curve2
+SumStatsIV2 <- dplyr::summarise(group_by(IV_curve2, treatment, voltage,), 
+n = n(),
+mean_i = mean(current),
+sd_i = sd(current),
+se_i = sd_i/sqrt(n))
+SumStatsIV2
+
+plot_IV2 <- ggplot(data= SumStatsIV2, aes(x=voltage, y=mean_i, color=treatment)) +  geom_point(stat="identity", position=position_dodge(), size=2) + geom_line(aes(group=treatment)) + geom_errorbar(data= SumStatsIV2, aes(ymin=mean_i-se_i, ymax=mean_i+se_i), width=.25) + geom_hline(yintercept=0, linetype="dotted") +  scale_x_continuous(limits = c(-100,20)) + geom_vline(xintercept = 0, linetype="dotted")
+plot_IV2
+
+IV_curve$voltage <- as.factor(IV_curve$voltage)
+lm_IV <- lmer(croot ~ treatment*voltage+(1|cell), data= IV_curve)
+plot(lm_IV, type=c("p","smooth"), col.line=1)
+lattice::qqmath(lm_IV)
+shapiro.test(resid(lm_IV))
+anova(lm_IV)
+emm_IV1  <- emmeans::emmeans(lm_IV, pairwise ~ treatment|voltage)
+emm_IV1
+```
