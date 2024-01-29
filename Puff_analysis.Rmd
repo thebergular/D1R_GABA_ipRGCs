@@ -255,14 +255,18 @@ Calculating the percent responsiveness of a cells to dopamine: visualization and
 ```{r}
 da_response
 percent_da <- da_response %>% group_by(cell, DA_responsive) %>% dplyr::summarise(base = (amplitude[treatment=="control"] + amplitude[treatment=="SCH39166"])/2, perc_inc = (amplitude[treatment=="dopamine"]/ base)-1)
-percent_da$trt <- 'da' 
+percent_da$trt <- 'DA' 
 percent_da
 
-SumStatsDA1 <- dplyr::summarise(group_by(percent_da, trt, DA_responsive), n = n(), mean_perc = mean(perc_inc),sd_perc = sd(perc_inc), se_perc = sd_perc/sqrt(n),
-)
-SumStatsDA1
+SumStatsDopamine <- dplyr::summarise(group_by(percent_da, DA_responsive), 
+        n = n(), 
+        mean_perc = mean(perc_inc), 
+        sd_perc = sd(perc_inc), 
+        se_perc = sd_perc/sqrt(n), 
+        )
+SumStatsDopamine
 
-plot_da_perc <-  ggplot() + geom_bar(data= SumStatsDA1, aes(DA_responsive, mean_perc, fill= DA_responsive), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=percent_da, aes(x= DA_responsive, y=perc_inc), size=2) + geom_errorbar(data= SumStatsDA1, aes(x=DA_responsive, ymin=mean_perc-se_perc, ymax=mean_perc+se_perc, fill = DA_responsive), position=position_dodge(width=0.9), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.8)) + theme_bw() + ylab("Percent Peak Current Change")
+plot_da_perc <-  ggplot() + geom_bar(data= SumStatsDopamine, aes(DA_responsive, mean_perc, fill= DA_responsive), position= "dodge", stat = "identity", width = 0.5) + geom_point(data=percent_da, aes(x= DA_responsive, y=perc_inc), size=2) + geom_errorbar(data= SumStatsDopamine, aes(x=DA_responsive, ymin=mean_perc-se_perc, ymax=mean_perc+se_perc, fill = DA_responsive), position=position_dodge(width=0.9), width=.25) + scale_y_continuous(labels = scales::percent, limits = c(-0.1,0.8)) + theme_bw() + ylab("Percent Peak Current Change")
 plot_da_perc
 
 ggsave(file="plot_da_perc.pdf", plot=plot_da_perc, width=6, height=4)
@@ -321,8 +325,8 @@ temp2 <- skf_response %>% filter(treatment == "SKF38393") %>%group_by(cell, DA_r
 percent_skf <- merge(temp1, temp2, all = T)
 percent_skf$perc_inc <- (percent_skf$effect - percent_skf$baseline)/percent_skf$baseline
   
-#percent_skf <- skf_response %>% group_by(cell, DA_responsive) %>% dplyr::summarise(base = (amplitude[treatment=="control"] + amplitude[treatment=="SCH39166"])/2, perc_inc = (amplitude[treatment=="SKF38393"]/ base)-1)
-percent_skf$trt <- 'skf' 
+#percent_skf <- skf_response %>% group_by(cell, DA_responsive) %>% dplyr::summarise(perc_inc = (amplitude[treatment=="SKF38393"]/ amplitude[treatment=="SKF38393"])-1)
+percent_skf$trt <- 'SKF' 
 percent_skf
   
 SumStatsSKF1 <- dplyr::summarise(group_by(percent_skf, trt, DA_responsive), 
@@ -352,7 +356,7 @@ t.test(perc_inc ~ DA_responsive, data = percent_skf, paired = FALSE)
 d_value1<- cohens_d(perc_inc ~ DA_responsive, data = percent_skf, paired = FALSE)
 d_value1
 
-pwr.t.test(d=-3.596382,power=0.9,sig.level=.05,type="two.sample",alternative="less")
+pwr.t.test(d=-3.338243, power=0.99, sig.level=.05,type="two.sample",alternative="less")
 ```
 Frequency histogram for D1R-responsiveness
 ```{r}
@@ -368,22 +372,35 @@ SumStatsDopamineR <- dplyr::summarise(group_by(percent_dopamine, DA_responsive),
         )
 SumStatsDopamineR
 
+dopamine.ftest <- var.test(perc_inc ~ DA_responsive, data = percent_dopamine)
+dopamine.ftest
+
+lm_dopamine <- lm(percent ~ DA_responsive, data = percent_dopamine)
+
+shapiro.test(rstandard(lm_dopamine))
+qqPlot(percent_dopamine$percent)
+
+res_da <- wilcox.test(percent ~ DA_responsive, data = percent_dopamine)
+res_da
+
 response_histo1 <- ggplot(percent_dopamine, aes(x=percent, color=DA_responsive, fill= DA_responsive)) + geom_histogram(aes(y=..density..), binwidth=2.5, alpha=0.2, position="identity") + geom_density(alpha=0.6) + geom_vline(data=SumStatsDopamineR, aes(xintercept=mean_perc, color=DA_responsive), linetype="dotted", size=1.5)
 
 response_histo1
 
 ggsave(file="response_histo1.svg", plot=response_histo1, width=6, height=4)
 
-response_histo2 <- ggplot(percent_dopamine, aes(x=percent, color=DA_responsive, fill= DA_responsive)) + geom_histogram(aes(y=..density..), binwidth=1.5, alpha=0.2, position="identity") + geom_density(alpha=0.6) + geom_vline(data=SumStatsDopamineR, aes(xintercept=mean_perc, color=DA_responsive), linetype="dotted", size=1.5) + geom_vline(xintercept =12.2, linetype="dashed", size=0.7) 
+response_histo2 <- ggplot(percent_dopamine, aes(x=percent, color=DA_responsive, fill= DA_responsive)) + geom_histogram(aes(y=..density..), binwidth=1.5, alpha=0.2, position="identity") + geom_density(alpha=0.6) + geom_vline(data=SumStatsDopamineR, aes(xintercept=mean_perc, color=DA_responsive), linetype="dotted", size=2) + geom_vline(xintercept =11, linetype="dashed", size=0.7) 
 
 response_histo2
 
 ggsave(file="response_histo2.svg", plot=response_histo2, width=6, height=4)
 
 response_histo3 <- ggplot(percent_dopamine, aes(x=percent, color=DA_responsive, fill= DA_responsive)) + geom_histogram(aes(y=..density..), binwidth=1.5, alpha=0.2, position="identity") + geom_density(alpha=0.6) + geom_vline(data=SumStatsDopamineR, aes(xintercept=mean_perc, color=DA_responsive), linetype="dotted", size=1.5) + 
-  annotate('rect', xmin=-15, xmax=12.2, ymin=0, ymax=Inf, alpha=.2, fill='red')
+  annotate('rect', xmin=-13, xmax=11, ymin=0, ymax=Inf, alpha=.2, fill='red') + geom_vline(xintercept =11, linetype="dashed", size=0.7) + geom_vline(xintercept =-13, linetype="dashed", size=0.7) 
 
 response_histo3
+
+ggsave(file="response_histo3.svg", plot=response_histo3, width=6, height=4)
 ```
 
 Effect of  50 uM forskolin on GABA-puff IPSC: summary, visualization and analysis
