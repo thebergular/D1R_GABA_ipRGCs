@@ -16,6 +16,7 @@ library(lmerTest)
 library(car)
 library(rstatix)
 library(pwr)
+library(EnvStats)
 ```
 
 IV curve visualization and analysis
@@ -194,6 +195,46 @@ SumStatsMOR1
 plot_incMOR1 <- ggplot(data= SumStatsMOR1, aes(x=trt, y=mean_perc, fill=trt)) + geom_bar(stat="identity", width = 0.5) + geom_point(data=percent_mu, aes(y=perc_inc), size=2) + geom_errorbar(data= SumStatsMOR1, aes(ymin=mean_perc-se_perc, ymax=mean_perc+se_perc), width=.25) + scale_y_continuous(labels = scales::percent)
 plot_incMOR1
 ```
+Establishing baseline and standard deviation for non-responsiveness in IGABA
+```{r}
+damgo_puff2
+morph_puff2
+
+percent.damgo <- damgo_puff2 %>% group_by(cell) %>% dplyr::summarise(base = (amplitude[treatment=="control"] + amplitude[treatment=="NLX"])/2, perc_inc = (amplitude[treatment=="DAMGO"]/ base)-1)
+
+percent.morph <- morph_puff2 %>% group_by(cell) %>% dplyr::summarise(base = (amplitude[treatment=="control"] + amplitude[treatment=="washout"])/2, perc_inc = (amplitude[treatment=="morphine"]/ base)-1)
+
+percent.damgo
+percent.morph
+
+percent.mu_opioid <- merge(percent.damgo, percent.morph, all = T)
+percent.mu_opioid
+
+percent.mu_opioid$percent <- percent.mu_opioid$perc_inc*100
+percent.mu_opioid <- data.frame(percent.mu_opioid)
+
+boxplot(percent.mu_opioid$percent)
+
+test_mu <- rosnerTest(percent.mu_opioid$percent, k = 2)
+test_mu
+
+percent.mu_opioid$scale_percent <- scale(percent.mu_opioid$percent)
+hist(percent.mu_opioid$scale_percent, breaks = 25)
+summary(percent.mu_opioid$scale_percent)
+
+percent.mu.opioid <- subset(percent.mu_opioid, percent < 15)
+percent.mu.opioid
+
+
+SumStatsMuR <- dplyr::summarise(group_by(percent.mu.opioid,), 
+        n = n(), 
+        mean_perc = mean(percent), 
+        sd_perc = sd(percent), 
+        se_perc = sd_perc/sqrt(n), 
+        )
+SumStatsMuR
+```
+
 
 Dopamine responsiveness of ipRGCs: summary and visualization
 ```{r}
@@ -362,6 +403,10 @@ Frequency histogram for D1R-responsiveness
 ```{r}
 percent_dopamine <- merge(percent_skf, percent_da, all = T)
 percent_dopamine$percent <- percent_dopamine$perc_inc*100
+percent_dopamine 
+percent_dopamine = percent_dopamine %>% 
+  dplyr::select(-c("base", "baseline","effect"))
+
 percent_dopamine
 
 SumStatsDopamineR <- dplyr::summarise(group_by(percent_dopamine, DA_responsive), 
